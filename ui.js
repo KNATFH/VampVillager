@@ -673,7 +673,7 @@
         setPhase(dayTitle, t(alive ? 'vote.cast' : 'vote.watch'));
         if (alive) {
           view.pick = {
-            ids: new Set(aliveIds.filter(id => id !== uid && id !== s.lastSpared)),
+            ids: new Set(aliveIds.filter(id => id !== uid)),
             selected: null, label: t('pick.vote')
           };
         }

@@ -89,7 +89,7 @@
     startVote() { this.votes = {}; this.accused = null; }
 
     voteCandidates(id) {
-      return this.alive().filter(o => o.id !== id && o.id !== this.lastSpared).map(o => o.id);
+      return this.alive().filter(o => o.id !== id).map(o => o.id);
     }
 
     castVote(id, targetId) {
