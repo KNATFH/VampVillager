@@ -68,24 +68,39 @@
     $('login-error').textContent = '';
     try {
       await noPersist;
-      await auth.signInWithEmailAndPassword($('email').value.trim(), $('pass').value);
+      const email = $('email').value.trim();
+      await auth.signInWithEmailAndPassword(email, $('pass').value);
       $('pass').value = '';
       try {
         await db.ref('presence').get(); // yalnızca yönetici okuyabilir
       } catch (err) {
+        // Nedenini ayırt et: yeni kurallarda "announce" giriş yapan herkese açıktır
+        let published = true;
+        try { await db.ref('announce').get(); } catch (err2) { published = false; }
         await auth.signOut();
-        throw { code: 'vv/not-admin' };
+        throw { code: published ? 'vv/not-admin' : 'vv/old-rules' };
       }
+      rememberEmail(email);
       start();
     } catch (err) {
       const code = err && err.code;
       $('login-error').textContent =
-        code === 'vv/not-admin' ? 'Bu hesabın yetkisi yok.'
+        code === 'vv/old-rules' ? 'Parola doğru ama yeni veritabanı kuralları yayınlanmamış. database.rules.local.json içeriğini Firebase > Realtime Database > Rules kısmına yapıştırıp Publish de.'
+          : code === 'vv/not-admin' ? 'Parola doğru ama kurallar bu e-postayı yönetici saymıyor. Rules kısmına database.rules.local.json dosyasını yapıştırdığından emin ol (database.rules.json değil).'
           : code === 'auth/too-many-requests' ? 'Çok fazla deneme. Biraz sonra tekrar dene.'
             : code === 'auth/network-request-failed' ? 'Bağlantı hatası.'
               : 'E-posta veya parola yanlış.';
     }
     btn.disabled = false;
+  }
+
+  // E-posta yalnızca bu cihazda hatırlanır (herkese açık koda yazılmaz); sonraki girişlerde sadece parola sorulur
+  const EMAIL_KEY = 'vv-admin-email';
+  function savedEmail() { try { return localStorage.getItem(EMAIL_KEY) || ''; } catch (e) { return ''; } }
+  function rememberEmail(email) { try { localStorage.setItem(EMAIL_KEY, email); } catch (e) { /* önemli değil */ } }
+  function showEmailField(on) {
+    $('email').hidden = !on;
+    $('email-change').hidden = on;
   }
 
   function start() {
@@ -340,6 +355,9 @@
 
   // ================= Bağlantılar =================
   $('login-form').addEventListener('submit', login);
+  $('email').value = savedEmail();
+  showEmailField(!savedEmail());
+  $('email-change').addEventListener('click', () => showEmailField(true));
   $('btn-logout').addEventListener('click', logout);
   $('announce-form').addEventListener('submit', sendAnnounce);
   $('watch-close').addEventListener('click', closeWatch);
