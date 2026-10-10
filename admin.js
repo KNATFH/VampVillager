@@ -1,5 +1,5 @@
 // Kontrol paneli. Yetki, Firebase veritabanı kurallarıyla (yalnızca yönetici e-postası) korunur;
-// bu sayfa sadece arayüzdür. Parola hiçbir dosyada durmaz, Firebase Auth'ta saklanır.
+// bu sayfa sadece arayüzdür. Giriş yöneticinin Google hesabıyla yapılır, parola yoktur.
 (function () {
   'use strict';
   const fb = window.firebase;
@@ -12,7 +12,7 @@
     return;
   }
 
-  // Oyundaki oturumdan ayrı bir bağlantı; oturum saklanmaz, her açılışta parola istenir
+  // Oyundaki oturumdan ayrı bir bağlantı; oturum saklanmaz, her açılışta yeniden giriş istenir
   const app = fb.initializeApp(cfg || {}, 'admin');
   const auth = fb.auth(app);
   const db = fb.database(app);
@@ -61,16 +61,16 @@
   const fmtBan = until => (until >= FOREVER ? 'Süresiz' : fmtDate(until));
 
   // ================= Giriş =================
-  async function login(e) {
-    e.preventDefault();
+  // Yalnızca yöneticinin Google hesabı kabul edilir; kontrolü veritabanı kuralları yapar.
+  async function login() {
     const btn = $('login-btn');
     btn.disabled = true;
     $('login-error').textContent = '';
     try {
       await noPersist;
-      const email = $('email').value.trim();
-      await auth.signInWithEmailAndPassword(email, $('pass').value);
-      $('pass').value = '';
+      const provider = fb.auth.GoogleAuthProvider ? new fb.auth.GoogleAuthProvider() : null;
+      if (provider) provider.setCustomParameters({ prompt: 'select_account' });
+      await auth.signInWithPopup(provider);
       try {
         await db.ref('presence').get(); // yalnızca yönetici okuyabilir
       } catch (err) {
@@ -80,27 +80,22 @@
         await auth.signOut();
         throw { code: published ? 'vv/not-admin' : 'vv/old-rules' };
       }
-      rememberEmail(email);
       start();
     } catch (err) {
       const code = err && err.code;
-      $('login-error').textContent =
-        code === 'vv/old-rules' ? 'Parola doğru ama yeni veritabanı kuralları yayınlanmamış. database.rules.local.json içeriğini Firebase > Realtime Database > Rules kısmına yapıştırıp Publish de.'
-          : code === 'vv/not-admin' ? 'Parola doğru ama kurallar bu e-postayı yönetici saymıyor. Rules kısmına database.rules.local.json dosyasını yapıştırdığından emin ol (database.rules.json değil).'
-          : code === 'auth/too-many-requests' ? 'Çok fazla deneme. Biraz sonra tekrar dene.'
-            : code === 'auth/network-request-failed' ? 'Bağlantı hatası.'
-              : 'E-posta veya parola yanlış.';
+      const messages = {
+        'vv/old-rules': 'Yeni veritabanı kuralları yayınlanmamış. Kuralları Firebase > Realtime Database > Rules kısmına yapıştırıp Publish de.',
+        'vv/not-admin': 'Bu Google hesabının yetkisi yok.',
+        'auth/popup-closed-by-user': '',
+        'auth/cancelled-popup-request': '',
+        'auth/popup-blocked': 'Tarayıcı giriş penceresini engelledi. Açılır pencerelere izin ver.',
+        'auth/unauthorized-domain': 'Bu site Firebase\'de izinli değil. Authentication > Settings > Authorized domains kısmına site adresini ekle.',
+        'auth/operation-not-allowed': 'Firebase\'de Google girişi açık değil. Authentication > Sign-in method kısmından aç.',
+        'auth/network-request-failed': 'Bağlantı hatası.'
+      };
+      $('login-error').textContent = code in messages ? messages[code] : 'Giriş yapılamadı.';
     }
     btn.disabled = false;
-  }
-
-  // E-posta yalnızca bu cihazda hatırlanır (herkese açık koda yazılmaz); sonraki girişlerde sadece parola sorulur
-  const EMAIL_KEY = 'vv-admin-email';
-  function savedEmail() { try { return localStorage.getItem(EMAIL_KEY) || ''; } catch (e) { return ''; } }
-  function rememberEmail(email) { try { localStorage.setItem(EMAIL_KEY, email); } catch (e) { /* önemli değil */ } }
-  function showEmailField(on) {
-    $('email').hidden = !on;
-    $('email-change').hidden = on;
   }
 
   function start() {
@@ -354,10 +349,7 @@
   }
 
   // ================= Bağlantılar =================
-  $('login-form').addEventListener('submit', login);
-  $('email').value = savedEmail();
-  showEmailField(!savedEmail());
-  $('email-change').addEventListener('click', () => showEmailField(true));
+  $('login-btn').addEventListener('click', login);
   $('btn-logout').addEventListener('click', logout);
   $('announce-form').addEventListener('submit', sendAnnounce);
   $('watch-close').addEventListener('click', closeWatch);

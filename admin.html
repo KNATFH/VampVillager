@@ -15,16 +15,13 @@
 <body data-time="night">
   <div class="sky sky-night"></div>
 
-  <!-- Giriş: oturum saklanmaz, her açılışta parola istenir -->
+  <!-- Giriş: oturum saklanmaz, her açılışta Google ile yeniden giriş istenir -->
   <section id="login" class="screen center active">
-    <form id="login-form" class="box" autocomplete="off">
+    <div class="box">
       <h2>Kontrol Paneli</h2>
-      <input id="email" type="text" inputmode="email" autocapitalize="off" placeholder="E-posta">
-      <input id="pass" type="password" placeholder="Parola" autocomplete="off">
       <div id="login-error" class="error"></div>
-      <button id="login-btn" class="btn primary" type="submit">Giriş</button>
-      <button id="email-change" class="btn ghost" type="button" hidden>E-postayı değiştir</button>
-    </form>
+      <button id="login-btn" class="btn primary" type="button">Google ile giriş</button>
+    </div>
   </section>
 
   <div id="panel" class="adm" hidden>

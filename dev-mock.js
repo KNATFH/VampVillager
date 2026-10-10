@@ -122,7 +122,12 @@
       return Promise.resolve({ user: current });
     },
     signOut: () => { current = null; emit(); return Promise.resolve(); },
-    setPersistence: () => Promise.resolve()
+    setPersistence: () => Promise.resolve(),
+    signInWithPopup: () => {
+      current = { uid: 'admin', displayName: 'Admin', updateProfile: () => Promise.resolve() };
+      emit();
+      return Promise.resolve({ user: current });
+    }
   };
 
   window.firebase = {

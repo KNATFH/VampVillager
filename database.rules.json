@@ -1,10 +1,10 @@
 {
   "rules": {
     "users": {
-      ".read": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
+      ".read": "auth != null && (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com')",
       "$uid": {
         ".read": "auth != null",
-        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'ADMIN_EMAIL')",
+        ".write": "auth != null && (auth.uid === $uid || (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com'))",
         "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 14" },
         "avatar": { ".validate": "newData.isString() && newData.val().length <= 20000" },
         "games": { ".validate": "newData.isNumber()" },
@@ -13,26 +13,26 @@
       }
     },
     "presence": {
-      ".read": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
+      ".read": "auth != null && (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com')",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid"
       }
     },
     "bans": {
-      ".read": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
-      ".write": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
+      ".read": "auth != null && (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com')",
+      ".write": "auth != null && (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com')",
       "$uid": {
         ".read": "auth != null && auth.uid === $uid"
       }
     },
     "announce": {
       ".read": "auth != null",
-      ".write": "auth != null && auth.token.email === 'ADMIN_EMAIL'"
+      ".write": "auth != null && (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com')"
     },
     "rooms": {
-      ".read": "auth != null && auth.token.email === 'ADMIN_EMAIL'",
+      ".read": "auth != null && (auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com')",
       "$code": {
-        ".write": "auth != null && (auth.token.email === 'ADMIN_EMAIL' || data.child('host').val() === auth.uid || (!data.exists() && newData.child('host').val() === auth.uid && (!root.child('bans').child(auth.uid).exists() || root.child('bans').child(auth.uid).child('until').val() < now)))",
+        ".write": "auth != null && ((auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com') || data.child('host').val() === auth.uid || (!data.exists() && newData.child('host').val() === auth.uid && (!root.child('bans').child(auth.uid).exists() || root.child('bans').child(auth.uid).child('until').val() < now)))",
         "host": { ".read": "auth != null" },
         "status": { ".read": "auth != null" },
         "state": { ".read": "auth != null" },
