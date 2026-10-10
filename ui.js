@@ -204,6 +204,13 @@
     };
     view.gameId = null; view.seq = -1;
 
+    net.setRoom(code);
+    // Moderatör oyunu sonlandırdıysa herkes odadan çıkar
+    sub(ref.child('closed'), 'value', s => {
+      if (!s.exists()) return;
+      toast(t('room.modEnded'));
+      leaveRoom(t('room.modEnded'));
+    });
     sub(ref.child('host'), 'value', s => {
       r.hostId = s.val();
       if (!s.exists()) leaveRoom(t('room.closed'));
@@ -243,6 +250,7 @@
     if (!r) return;
     room = null;
     hostToken++;
+    net.setRoom(null);
     r.subs.forEach(off => off());
     try {
       const target = r.isHost ? r.ref : r.ref.child('players/' + net.uid());
@@ -347,7 +355,10 @@
     try {
       const secret = {};
       humans().forEach(p => { secret[p.id] = { role: p.role, gameId }; });
-      await r.ref.update({ status: 'playing', state: null, input: null, chat: null, secret });
+      // Bütün roller: yalnızca kontrol paneli okuyabilir
+      const roles = {};
+      g.players.forEach(p => { roles[p.id] = p.role; });
+      await r.ref.update({ status: 'playing', state: null, input: null, chat: null, secret, roles });
 
       await phase('role', TIME.role);
       await phase('firstDay', TIME.firstDay);
@@ -710,6 +721,7 @@
       }
 
       case 'over':
+        if (me) net.bumpGames();
         closeTrial();
         gameOver(s);
         break;
@@ -759,7 +771,37 @@
     });
   }, 100);
 
+  // ================= Ban ve duyuru =================
+  let toastTimer = null;
+  function toast(text) {
+    const el = $('toast');
+    el.textContent = text;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 12000);
+  }
+
+  // Banlıysa oyundan çıkarıp ban ekranını gösterir; ban bitince menüye döner
+  function checkBan() {
+    if (!net.uid()) return;
+    const until = net.bannedUntil();
+    const onBanScreen = $('screen-banned').classList.contains('active');
+    if (until) {
+      leaveRoom();
+      closeOverlay();
+      const date = until > 4e12 ? t('ban.permanent') : new Date(until).toLocaleString(getLang());
+      $('ban-until').textContent = t('ban.until', { date });
+      show('banned');
+    } else if (onBanScreen) {
+      show('menu');
+    }
+  }
+
   // ================= Bağlantılar =================
+  net.onBan(checkBan);
+  net.onAnnounce(a => { if (a && a.text && net.now() - a.t < 5 * 60 * 1000) toast(a.text); });
+  setInterval(() => { if ($('screen-banned').classList.contains('active')) checkBan(); }, 15000);
+  $('ban-logout').addEventListener('click', () => net.logout());
   applyStatic();
   renderAuth();
   $('emblem').innerHTML = ICONS.vampire;
@@ -797,7 +839,8 @@
     net.onAuth(user => {
       if (user) {
         net.loadProfile().catch(() => { });
-        if (!room) show('menu');
+        if (!room) show(net.bannedUntil() ? 'banned' : 'menu');
+        checkBan();
       } else {
         leaveRoom();
         closeOverlay();

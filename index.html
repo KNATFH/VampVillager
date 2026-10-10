@@ -31,6 +31,15 @@
       </form>
     </section>
 
+    <!-- Ban ekranı -->
+    <section id="screen-banned" class="screen center">
+      <div class="box">
+        <h2 data-i18n="ban.title">Hesap engellendi</h2>
+        <div id="ban-until" class="wait"></div>
+        <button id="ban-logout" class="btn" type="button" data-i18n="settings.logout">Çıkış Yap</button>
+      </div>
+    </section>
+
     <!-- Ana menü -->
     <section id="screen-menu" class="screen center">
       <button id="btn-settings" class="icon-btn settings-btn" data-i18n-label="settings.title">
@@ -104,6 +113,7 @@
   </div>
 
   <div id="splash" class="splash"></div>
+  <div id="toast" class="toast" hidden></div>
   <input id="avatar-file" type="file" accept="image/*" hidden>
 
   <!-- Kürsü: tam ekran -->

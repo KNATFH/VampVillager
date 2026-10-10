@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0c11">
+  <title>Kontrol Paneli</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-time="night">
+  <div class="sky sky-night"></div>
+
+  <!-- Giriş: oturum saklanmaz, her açılışta parola istenir -->
+  <section id="login" class="screen center active">
+    <form id="login-form" class="box" autocomplete="off">
+      <h2>Kontrol Paneli</h2>
+      <input id="email" type="text" inputmode="email" autocapitalize="off" placeholder="E-posta">
+      <input id="pass" type="password" placeholder="Parola" autocomplete="off">
+      <div id="login-error" class="error"></div>
+      <button id="login-btn" class="btn primary" type="submit">Giriş</button>
+    </form>
+  </section>
+
+  <div id="panel" class="adm" hidden>
+    <header class="adm-top">
+      <h1>Kontrol Paneli</h1>
+      <button id="btn-logout" class="btn adm-small" type="button">Çıkış</button>
+    </header>
+
+    <div id="stats" class="adm-stats"></div>
+
+    <nav class="adm-tabs">
+      <button class="adm-tab on" data-tab="users" type="button">Oyuncular</button>
+      <button class="adm-tab" data-tab="rooms" type="button">Canlı Oyunlar</button>
+      <button class="adm-tab" data-tab="announce" type="button">Duyuru</button>
+    </nav>
+
+    <section id="tab-users" class="adm-section">
+      <div class="adm-tools">
+        <input id="search" type="text" placeholder="İsim ara" autocomplete="off">
+        <select id="filter">
+          <option value="all">Hepsi</option>
+          <option value="online">Çevrimiçi</option>
+          <option value="game">Oyunda</option>
+          <option value="banned">Banlı</option>
+        </select>
+        <select id="sort">
+          <option value="status">Duruma göre</option>
+          <option value="name">İsme göre</option>
+          <option value="games">Maç sayısına göre</option>
+          <option value="new">En yeni kayıt</option>
+        </select>
+      </div>
+      <div id="user-list" class="adm-list"></div>
+    </section>
+
+    <section id="tab-rooms" class="adm-section" hidden>
+      <div id="room-list" class="adm-rooms"></div>
+    </section>
+
+    <section id="tab-announce" class="adm-section" hidden>
+      <form id="announce-form" class="adm-tools">
+        <input id="announce-text" type="text" maxlength="140" placeholder="Herkese gösterilecek duyuru" autocomplete="off">
+        <button class="btn primary adm-small" type="submit">Gönder</button>
+      </form>
+      <div id="announce-current" class="adm-note"></div>
+    </section>
+  </div>
+
+  <!-- Oyun izleme -->
+  <div id="watch" class="adm-watch" hidden>
+    <header class="adm-top">
+      <div class="phase">
+        <div id="watch-title" class="phase-title"></div>
+        <div id="watch-sub" class="phase-sub"></div>
+      </div>
+      <div id="watch-timer" class="timer"></div>
+      <button id="watch-end" class="btn primary adm-small" type="button">Sonlandır</button>
+      <button id="watch-close" class="btn adm-small" type="button">Kapat</button>
+    </header>
+    <div class="stage">
+      <div id="watch-players" class="players"></div>
+      <aside class="chat-home"><div class="chat"><ul id="watch-chat"></ul></div></aside>
+    </div>
+  </div>
+
+  <!-- Onay / ban penceresi -->
+  <div id="modal" class="overlay" hidden>
+    <div id="modal-card" class="overlay-card"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="dev-mock.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

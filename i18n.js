@@ -37,7 +37,9 @@
       'settings.account': 'Hesap', 'settings.logout': 'Çıkış Yap', 'over.leave': 'Çık',
       'settings.photo': 'Resim Seç', 'settings.removePhoto': 'Resmi Kaldır',
       'vote.tie': 'Oylar eşit', 'vote.tieLog': 'Oylar eşit, oylama iptal.',
-      'over.draw': 'Berabere', 'over.drawSub': '{n} gün kimse ölmedi'
+      'over.draw': 'Berabere', 'over.drawSub': '{n} gün kimse ölmedi',
+      'room.modEnded': 'Moderatör oyunu sonlandırdı.',
+      'ban.title': 'Hesap engellendi', 'ban.until': 'Bitiş: {date}', 'ban.permanent': 'Süresiz'
     },
     en: {
       'menu.title': 'Vampire', 'menu.subtitle': 'Village', 'menu.play': 'Play',
@@ -73,7 +75,9 @@
       'settings.account': 'Account', 'settings.logout': 'Sign Out', 'over.leave': 'Leave',
       'settings.photo': 'Choose Photo', 'settings.removePhoto': 'Remove Photo',
       'vote.tie': 'Votes tied', 'vote.tieLog': 'Votes tied, vote cancelled.',
-      'over.draw': 'Draw', 'over.drawSub': 'Nobody died for {n} days'
+      'over.draw': 'Draw', 'over.drawSub': 'Nobody died for {n} days',
+      'room.modEnded': 'A moderator ended the game.',
+      'ban.title': 'Account suspended', 'ban.until': 'Until: {date}', 'ban.permanent': 'Permanent'
     }
   };
 

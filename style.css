@@ -356,3 +356,15 @@ input[type="password"]:focus { border-color: #4a5268; }
 
 /* ---- Profil resmi ---- */
 .avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- Duyuru / bildirim ---- */
+.toast {
+  position: fixed; left: 50%; top: max(14px, env(safe-area-inset-top)); transform: translateX(-50%);
+  z-index: 40; max-width: min(520px, calc(100% - 32px));
+  padding: 12px 18px;
+  background: #0f1118; color: #f1eaf7;
+  border: 1px solid var(--gold); border-radius: 8px;
+  font-size: .9rem; text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+  animation: fade .3s ease;
+}

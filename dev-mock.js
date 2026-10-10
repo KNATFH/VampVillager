@@ -4,7 +4,7 @@
   'use strict';
   if (!/[?&]mock/.test(location.search)) return;
 
-  const store = {};
+  const store = { '.info': { connected: true } };
   const listeners = [];
   const split = p => p.split('/').filter(Boolean);
 
@@ -121,12 +121,13 @@
       emit();
       return Promise.resolve({ user: current });
     },
-    signOut: () => { current = null; emit(); return Promise.resolve(); }
+    signOut: () => { current = null; emit(); return Promise.resolve(); },
+    setPersistence: () => Promise.resolve()
   };
 
   window.firebase = {
     isMock: true,
-    initializeApp: () => { },
+    initializeApp: () => ({}),
     database: () => ({ ref }),
     auth: () => authObj
   };
