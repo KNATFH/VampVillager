@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0c11">
+  <title>Vampir Köylü</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-time="night">
+  <div class="sky sky-night"></div>
+  <div class="sky sky-day"></div>
+
+  <div id="app">
+
+    <!-- Giriş / hesap oluşturma -->
+    <section id="screen-auth" class="screen center">
+      <button id="btn-settings-auth" class="icon-btn settings-btn" type="button" data-i18n-label="settings.title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.900 4.900l2.100 2.100M17 17l2.100 2.100M19.100 4.900L17 7M7 17l-2.100 2.100"/></svg>
+      </button>
+      <form id="auth-form" class="box">
+        <h2 id="auth-title"></h2>
+        <input id="auth-name" type="text" maxlength="14" autocomplete="username" autocapitalize="off" data-i18n-placeholder="auth.name">
+        <input id="auth-pass" type="password" maxlength="64" data-i18n-placeholder="auth.pass">
+        <div id="auth-error" class="error"></div>
+        <button id="auth-submit" class="btn primary" type="submit"></button>
+        <button id="auth-toggle" class="btn ghost" type="button"></button>
+      </form>
+    </section>
+
+    <!-- Ana menü -->
+    <section id="screen-menu" class="screen center">
+      <button id="btn-settings" class="icon-btn settings-btn" data-i18n-label="settings.title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.900 4.900l2.100 2.100M17 17l2.100 2.100M19.100 4.900L17 7M7 17l-2.100 2.100"/></svg>
+      </button>
+      <div class="menu">
+        <div class="emblem" id="emblem"></div>
+        <h1><b data-i18n="menu.title">Vampir</b><span data-i18n="menu.subtitle">Köylü</span></h1>
+        <button id="btn-play" class="btn primary" data-i18n="menu.play">Oyna</button>
+      </div>
+    </section>
+
+    <!-- Oda kur / katıl -->
+    <section id="screen-room" class="screen center">
+      <div class="box">
+        <h2 data-i18n="room.title">Oda</h2>
+        <button id="btn-create" class="btn primary" data-i18n="room.create">Oda Kur</button>
+        <form id="join-form" class="row" autocomplete="off">
+          <input id="input-code" type="text" maxlength="5" autocapitalize="characters" data-i18n-placeholder="room.code">
+          <button class="btn" type="submit" data-i18n="room.join">Katıl</button>
+        </form>
+        <div id="room-error" class="error"></div>
+        <button id="btn-room-back" class="btn ghost" data-i18n="room.back">Geri</button>
+      </div>
+    </section>
+
+    <!-- Lobi -->
+    <section id="screen-lobby" class="screen center">
+      <div class="box">
+        <div class="lobby-head">
+          <h2 data-i18n="lobby.title">Lobi</h2>
+          <div class="room-code"><span data-i18n="lobby.code">Kod</span><b id="room-code"></b></div>
+        </div>
+        <ul id="lobby-list" class="lobby-list"></ul>
+        <div class="lobby-count" id="lobby-count"></div>
+        <div id="lobby-wait" class="wait" data-i18n="lobby.waiting" hidden></div>
+        <button id="btn-add-bot" class="btn" data-i18n="lobby.addBot">Bot Ekle</button>
+        <button id="btn-start" class="btn primary" disabled data-i18n="lobby.start">Başlat</button>
+        <button id="btn-lobby-back" class="btn ghost" data-i18n="lobby.leave">Çık</button>
+      </div>
+    </section>
+
+    <!-- Oyun -->
+    <section id="screen-game" class="screen">
+      <header class="top">
+        <div class="orb"></div>
+        <div class="phase">
+          <div id="phase-title" class="phase-title"></div>
+          <div id="phase-sub" class="phase-sub"></div>
+        </div>
+        <div class="timer js-timer"></div>
+        <div id="my-role" class="role-tag"></div>
+        <button id="btn-quit" class="icon-btn" data-i18n-label="quit.label">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+      <div class="timerbar"><i class="js-fill"></i></div>
+      <main class="stage">
+        <div id="players" class="players"></div>
+        <aside id="chat-home" class="chat-home">
+          <div id="chat" class="chat">
+            <ul id="chat-list"></ul>
+            <form id="chat-form" autocomplete="off">
+              <input id="chat-input" type="text" maxlength="120">
+              <button class="btn primary" type="submit" data-i18n="chat.send">Gönder</button>
+            </form>
+          </div>
+        </aside>
+      </main>
+    </section>
+  </div>
+
+  <div id="splash" class="splash"></div>
+
+  <!-- Kürsü: tam ekran -->
+  <div id="trial" class="trial" hidden>
+    <div class="trial-inner">
+      <div class="trial-head">
+        <span class="trial-label" data-i18n="phase.trial">Kürsü</span>
+        <span class="timer js-timer"></span>
+      </div>
+      <div class="timerbar"><i class="js-fill"></i></div>
+      <div class="trial-accused">
+        <div id="trial-avatar" class="avatar xl"></div>
+        <h2 id="trial-name"></h2>
+        <div id="trial-sub" class="trial-sub"></div>
+      </div>
+      <div id="trial-chat-slot" class="trial-chat"></div>
+      <div id="trial-actions" class="trial-actions">
+        <button id="btn-kill" class="verdict kill" type="button" data-i18n="trial.kill">Öldür</button>
+        <button id="btn-spare" class="verdict spare" type="button" data-i18n="trial.spare">İndir</button>
+      </div>
+      <div id="trial-result" class="trial-result" hidden>
+        <div id="trial-verdict" class="trial-verdict"></div>
+        <div id="trial-counts" class="trial-counts"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rol / oyun sonu -->
+  <div id="overlay" class="overlay" hidden>
+    <div id="overlay-card" class="overlay-card"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="dev-mock.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="i18n.js"></script>
+  <script src="net.js"></script>
+  <script src="engine.js"></script>
+  <script src="bots.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
