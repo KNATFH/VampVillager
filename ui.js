@@ -6,8 +6,10 @@
   const { VampGame, BotBrain, ROLES, MIN_PLAYERS, MAX_PLAYERS, t, setLang, getLang, applyStatic, LANGS, net } = window.VV;
 
   // Süreler (saniye). Hayatta insan kalmadıysa izleyenler beklemesin diye kısalır.
-  const TIME = { role: 4, firstDay: 10, night: 20, morning: 6, vote: 16, trial: 16, verdict: 4 };
+  const TIME = { role: 4, firstDay: 10, night: 20, morning: 6, vote: 16, tie: 3, trial: 16, verdict: 4 };
   const TIME_DEAD = { night: 6, vote: 8, trial: 8 };
+  const MAX_TIES = 2;   // üst üste bu kadar eşitlik olursa gece olur
+  const QUIET_DAYS = 3; // bu kadar gün kimse ölmezse oyun berabere biter
 
   const AVATAR = '<svg viewBox="0 0 40 40"><rect width="40" height="40" fill="#c4c8cf"/><circle cx="20" cy="15.5" r="7" fill="#fff"/><path d="M5 40c0-9 6.500-15 15-15s15 6 15 15z" fill="#fff"/></svg>';
   const ICONS = {
@@ -32,7 +34,33 @@
     return el;
   }
 
-  const avatar = () => h('span', { class: 'avatar', html: AVATAR });
+  // Profil resmi varsa onu, yoksa boş profili gösterir
+  function fillAvatar(el, src) {
+    if (typeof src === 'string' && src.startsWith('data:image/')) el.replaceChildren(h('img', { src, alt: '' }));
+    else el.innerHTML = AVATAR;
+    return el;
+  }
+  const avatar = src => fillAvatar(h('span', { class: 'avatar' }), src);
+  const avatarOf = id => (room ? room.avatars[id] : null);
+
+  // Seçilen resmi ortadan kare kırpıp küçültür
+  function fileToAvatar(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const size = 96;
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const m = Math.min(img.width, img.height);
+        c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
 
   function show(screen) {
     document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + screen));
@@ -100,7 +128,14 @@
         onclick: () => { setLang(l.id); renderAuth(); openSettings(); }
       }, l.name))),
       logged ? h('div', { class: 'label' }, t('settings.account')) : null,
-      logged ? h('div', { class: 'account' }, avatar(), h('span', { class: 'nm' }, net.name())) : null,
+      logged ? h('div', { class: 'account' }, avatar(net.avatar()), h('span', { class: 'nm' }, net.name())) : null,
+      logged ? h('div', { class: 'seg' },
+        h('button', { class: 'btn', type: 'button', onclick: () => $('avatar-file').click() }, t('settings.photo')),
+        h('button', {
+          class: 'btn', type: 'button', disabled: !net.avatar(),
+          onclick: () => net.setAvatar(null).catch(() => { }).then(openSettings)
+        }, t('settings.removePhoto'))
+      ) : null,
       logged ? h('button', { class: 'btn', type: 'button', onclick: () => { closeOverlay(); net.logout(); } }, t('settings.logout')) : null,
       h('button', { class: 'btn ghost', type: 'button', onclick: closeOverlay }, t('settings.close'))
     );
@@ -126,7 +161,7 @@
         ref = net.ref('rooms/' + code);
         if (!(await ref.child('host').get()).exists()) break;
       }
-      await ref.set({ host: uid, status: 'lobby', players: { [uid]: { name: net.name(), t: Date.now() } } });
+      await ref.set({ host: uid, status: 'lobby', players: { [uid]: { name: net.name(), t: Date.now(), avatar: net.avatar() } } });
       ref.onDisconnect().remove(); // oda sahibi koparsa oda kapanır
       attach(code, true);
     } catch (e) {
@@ -149,7 +184,7 @@
       else if (Object.keys(players.val() || {}).length >= MAX_PLAYERS) err = 'room.full';
       if (err) { $('room-error').textContent = t(err); return; }
       const mine = ref.child('players/' + uid);
-      await mine.set({ name: net.name(), t: Date.now() });
+      await mine.set({ name: net.name(), t: Date.now(), avatar: net.avatar() });
       mine.onDisconnect().remove();
       $('input-code').value = '';
       attach(code, false);
@@ -161,7 +196,7 @@
   function attach(code, isHost) {
     const ref = net.ref('rooms/' + code);
     const uid = net.uid();
-    const r = room = { code, ref, isHost, hostId: null, players: {}, status: null, state: null, secret: null, inputs: {}, onInput: null, subs: [] };
+    const r = room = { code, ref, isHost, hostId: null, players: {}, avatars: {}, status: null, state: null, secret: null, inputs: {}, onInput: null, subs: [] };
     const sub = (q, type, cb) => {
       const fn = s => { if (room === r) cb(s); };
       q.on(type, fn);
@@ -174,7 +209,12 @@
       if (!s.exists()) leaveRoom(t('room.closed'));
       else renderLobby();
     });
-    sub(ref.child('players'), 'value', s => { r.players = s.val() || {}; renderLobby(); });
+    sub(ref.child('players'), 'value', s => {
+      r.players = s.val() || {};
+      // Oyuncu koparsa bile resmi maç boyunca kalsın
+      Object.keys(r.players).forEach(id => { if (r.players[id].avatar) r.avatars[id] = r.players[id].avatar; });
+      renderLobby();
+    });
     sub(ref.child('secret/' + uid), 'value', s => { r.secret = s.val(); onState(); });
     sub(ref.child('state'), 'value', s => { r.state = s.val(); onState(); });
     sub(ref.child('chat').limitToLast(60), 'child_added', s => {
@@ -228,7 +268,7 @@
     const list = sortedPlayers();
     $('room-code').textContent = r.code;
     $('lobby-list').replaceChildren(...list.map(([id, p]) => h('li', null,
-      avatar(),
+      avatar(p.avatar),
       h('span', { class: 'nm' }, p.name),
       id === uid ? h('span', { class: 'tag' }, t('lobby.you'))
         : id === r.hostId ? h('span', { class: 'tag host' }, t('lobby.host'))
@@ -278,7 +318,7 @@
       const inTrial = cur.phase === 'trial' || cur.phase === 'verdict';
       const state = Object.assign({
         gameId, seq, day: g.day, players,
-        votes: (cur.phase === 'vote' || inTrial) ? Object.assign({}, g.votes) : null,
+        votes: (cur.phase === 'vote' || cur.phase === 'tie' || inTrial) ? Object.assign({}, g.votes) : null,
         accused: inTrial ? g.accused : null,
         lastSpared: g.lastSpared || null,
         winner: over ? g.winner : null
@@ -312,7 +352,10 @@
       await phase('role', TIME.role);
       await phase('firstDay', TIME.firstDay);
 
+      let quiet = 0;
       while (true) {
+        const aliveBefore = g.alive().length;
+
         // ---- Gece ----
         g.startNight();
         bots().forEach(b => { const v = brain.nightAction(b); if (v) g.setNightAction(b.id, v); });
@@ -325,6 +368,7 @@
         if (nightWin) break;
 
         // ---- Gündüz: oylama -> kürsü ----
+        let ties = 0;
         while (true) {
           g.startVote();
           const total = dur('vote') * 1000;
@@ -356,6 +400,14 @@
           queue.forEach(q => g.castVote(q.bot.id, brain.vote(q.bot)));
           const vote = g.resolveVote();
           brain.onVote(vote);
+          if (vote.tie) {
+            // Eşitlik: oylama iptal, kısa bekleme. Üst üste ikinci eşitlikte gece olur.
+            ties++;
+            await phase('tie', TIME.tie);
+            if (ties >= MAX_TIES) break;
+            continue;
+          }
+          ties = 0;
           if (!vote.accused) break;
 
           g.startTrial();
@@ -369,6 +421,10 @@
           if (res.nightFalls) break;
         }
         if (g.winner) break;
+
+        // Kimse ölmeden geçen günler
+        quiet = g.alive().length === aliveBefore ? quiet + 1 : 0;
+        if (quiet >= QUIET_DAYS) { g.winner = 'draw'; break; }
       }
 
       seq++;
@@ -459,7 +515,7 @@
     const mine = s.accused === net.uid();
     const me = meIn(s);
     const canVote = s.phase === 'trial' && !!(me && me.alive) && !mine;
-    $('trial-avatar').innerHTML = AVATAR;
+    fillAvatar($('trial-avatar'), avatarOf(s.accused));
     $('trial-name').textContent = nameIn(s, s.accused);
     $('trial-sub').textContent = mine && s.phase === 'trial' ? t('trial.defend') : '';
     $('trial-actions').hidden = !canVote;
@@ -517,7 +573,7 @@
         }
       },
         h('span', { class: 'avatar-wrap' },
-          avatar(),
+          avatar(avatarOf(id)),
           tally[id] ? h('span', { class: 'count' }, String(tally[id])) : null),
         h('span', { class: 'nm' }, p.name),
         h('span', { class: 'meta' }, meta)
@@ -623,6 +679,13 @@
         }
         break;
 
+      case 'tie':
+        closeTrial();
+        setTime('day');
+        setPhase(dayTitle, t('vote.tie'));
+        sys(t('vote.tieLog'));
+        break;
+
       case 'trial':
         setTime('day');
         setPhase(t('phase.trial'), nameIn(s, s.accused));
@@ -654,10 +717,11 @@
   }
 
   function gameOver(s) {
+    const draw = s.winner === 'draw';
     const vampWon = s.winner === 'vampire';
     const role = myRole();
     const iWon = (role === ROLES.VAMPIRE) === vampWon;
-    const title = t(vampWon ? 'over.vampire' : 'over.villagers');
+    const title = t(draw ? 'over.draw' : vampWon ? 'over.vampire' : 'over.villagers');
     const list = Object.entries(s.players).sort((a, b) => a[1].order - b[1].order);
     setTime('day');
     setPhase(title);
@@ -665,9 +729,10 @@
     overlay(
       h('div', { class: 'role-icon ' + (vampWon ? 'vampire' : 'villager'), html: ICONS[vampWon ? 'vampire' : 'villager'] }),
       h('h2', null, title),
-      role ? h('div', { class: 'outcome' + (iWon ? '' : ' lose') }, t(iWon ? 'over.win' : 'over.lose')) : null,
-      h('ul', { class: 'role-list' }, ...list.map(([, p]) => h('li', { class: p.alive ? '' : 'dead' },
-        avatar(),
+      draw ? h('div', { class: 'outcome lose' }, t('over.drawSub', { n: QUIET_DAYS })) : null,
+      role && !draw ? h('div', { class: 'outcome' + (iWon ? '' : ' lose') }, t(iWon ? 'over.win' : 'over.lose')) : null,
+      h('ul', { class: 'role-list' }, ...list.map(([id, p]) => h('li', { class: p.alive ? '' : 'dead' },
+        avatar(avatarOf(id)),
         h('span', { class: 'nm' }, p.name),
         h('span', { class: 'rl ' + p.role }, t('role.' + p.role))
       ))),
@@ -701,6 +766,13 @@
   $('btn-settings').addEventListener('click', openSettings);
   $('btn-settings-auth').addEventListener('click', openSettings);
   $('auth-form').addEventListener('submit', submitAuth);
+  $('avatar-file').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try { await net.setAvatar(await fileToAvatar(file)); } catch (err) { /* resim okunamadı */ }
+    if (!$('overlay').hidden) openSettings();
+  });
   $('auth-toggle').addEventListener('click', () => {
     authMode = authMode === 'login' ? 'register' : 'login';
     $('auth-error').textContent = '';
@@ -724,6 +796,7 @@
   if (net.ok) {
     net.onAuth(user => {
       if (user) {
+        net.loadProfile().catch(() => { });
         if (!room) show('menu');
       } else {
         leaveRoom();

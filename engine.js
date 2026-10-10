@@ -106,7 +106,8 @@
       if (!Object.keys(tally).length) return { votes: {}, tally, accused: null, max: 0, tie: false };
       const max = Math.max(...Object.values(tally));
       const tied = Object.keys(tally).filter(id => tally[id] === max);
-      this.accused = pick(tied);
+      // Eşitlikte kimse kürsüye çıkmaz, oylama iptal olur
+      this.accused = tied.length > 1 ? null : tied[0];
       return { votes: Object.assign({}, this.votes), tally, accused: this.accused, max, tie: tied.length > 1 };
     }
 

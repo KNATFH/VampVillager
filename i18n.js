@@ -34,7 +34,10 @@
       'err.unknown': 'Bir şeyler ters gitti.', 'err.config': 'Firebase ayarı eksik: firebase-config.js',
       'room.notFound': 'Oda bulunamadı.', 'room.started': 'Oyun başlamış.', 'room.full': 'Oda dolu.', 'room.closed': 'Oda kapandı.',
       'lobby.waiting': 'Oda sahibi bekleniyor', 'lobby.host': 'Oda sahibi',
-      'settings.account': 'Hesap', 'settings.logout': 'Çıkış Yap', 'over.leave': 'Çık'
+      'settings.account': 'Hesap', 'settings.logout': 'Çıkış Yap', 'over.leave': 'Çık',
+      'settings.photo': 'Resim Seç', 'settings.removePhoto': 'Resmi Kaldır',
+      'vote.tie': 'Oylar eşit', 'vote.tieLog': 'Oylar eşit, oylama iptal.',
+      'over.draw': 'Berabere', 'over.drawSub': '{n} gün kimse ölmedi'
     },
     en: {
       'menu.title': 'Vampire', 'menu.subtitle': 'Village', 'menu.play': 'Play',
@@ -67,7 +70,10 @@
       'err.unknown': 'Something went wrong.', 'err.config': 'Firebase config missing: firebase-config.js',
       'room.notFound': 'Room not found.', 'room.started': 'Game already started.', 'room.full': 'Room is full.', 'room.closed': 'Room closed.',
       'lobby.waiting': 'Waiting for the host', 'lobby.host': 'Host',
-      'settings.account': 'Account', 'settings.logout': 'Sign Out', 'over.leave': 'Leave'
+      'settings.account': 'Account', 'settings.logout': 'Sign Out', 'over.leave': 'Leave',
+      'settings.photo': 'Choose Photo', 'settings.removePhoto': 'Remove Photo',
+      'vote.tie': 'Votes tied', 'vote.tieLog': 'Votes tied, vote cancelled.',
+      'over.draw': 'Draw', 'over.drawSub': 'Nobody died for {n} days'
     }
   };
 

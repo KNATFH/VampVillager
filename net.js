@@ -8,7 +8,7 @@
   const DOMAIN = '@vampvillager.game';
 
   const net = { ok: !!(fb && (cfg || fb.isMock)) };
-  let auth = null, db = null, offset = 0, pendingName = null;
+  let auth = null, db = null, offset = 0, pendingName = null, avatarData = null;
 
   if (net.ok) {
     fb.initializeApp(cfg || {});
@@ -51,7 +51,18 @@
     await auth.signInWithEmailAndPassword(emailFor(name), pass);
   };
 
-  net.logout = () => auth.signOut();
+  net.logout = () => { avatarData = null; return auth.signOut(); };
+
+  // Profil resmi: küçültülmüş bir data URL olarak users/{uid}/avatar altında durur
+  net.avatar = () => avatarData;
+  net.loadProfile = async () => {
+    const snap = await db.ref('users/' + net.uid() + '/avatar').get();
+    avatarData = snap.val() || null;
+  };
+  net.setAvatar = async data => {
+    avatarData = data || null;
+    await db.ref('users/' + net.uid() + '/avatar').set(avatarData);
+  };
 
   root.VV = root.VV || {};
   root.VV.net = net;

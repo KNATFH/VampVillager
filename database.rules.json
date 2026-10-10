@@ -4,7 +4,8 @@
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid",
-        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 14" }
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 14" },
+        "avatar": { ".validate": "newData.isString() && newData.val().length <= 20000" }
       }
     },
     "rooms": {
@@ -16,7 +17,8 @@
         "players": {
           ".read": "auth != null",
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || data.exists() || root.child('rooms').child($code).child('status').val() === 'lobby')"
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || data.exists() || root.child('rooms').child($code).child('status').val() === 'lobby')",
+            "avatar": { ".validate": "newData.isString() && newData.val().length <= 20000" }
           }
         },
         "secret": {
